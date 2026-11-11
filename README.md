@@ -15,10 +15,8 @@ Turn a client's process list or SOP into an automation assessment, for any indus
    - 3-year cost-benefit
    - Tool fit (RPA, document AI, generative AI, agentic AI, system fix)
    - RACI
-   - RAID log
-   - Controls
-   - Discovery questions
-5. **Download the Excel pack:** a workbook with live formulas.
+   - Assumptions: how each number was worked out, line by line
+5. **Download the Excel pack:** a workbook with live formulas. It also has the RAID log, controls and discovery questions.
 
 **Libraries:** finance & accounting, banking, healthcare providers, health plans, insurance operations, retail, HR and payroll, and contact center (135 processes).
 
