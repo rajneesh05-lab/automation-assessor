@@ -6,7 +6,7 @@ Turn a client's process list or SOP into an automation assessment, for any indus
 
 1. **Pick the industry.** It decides which process libraries are used.
 2. **Read an SOP (optional).** Load Word, PDF or text and get the steps, who does them, the systems, the time per item and the best-fit technology.
-3. **Enter the process list.** Picking the industry loads its processes; enter the client's FTE for each step they do. Or import the client's own file in any layout with **Import client format**, paste rows from Excel, or import the input template.
+3. **Enter the process list.** Picking the industry loads its processes; enter the client's FTE for each step they do. Or import the client's own files in any layout with **Import client format**. Several files can be read together, for example the process list from one and the volumes and FTE from another, and they are joined into one list. You can also paste rows from Excel, or import the input template.
 4. **Get the assessment.** It updates as you type:
    - Summary
    - Opportunities (Go / Maybe / No)
