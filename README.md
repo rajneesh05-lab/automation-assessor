@@ -2,6 +2,8 @@
 
 **Open the tool:** https://rajneesh05-lab.github.io/automation-assessor/
 
+**Insurance edition:** https://rajneesh05-lab.github.io/automation-assessor/insurance/ (Insurance Process Automation Assessor: tick the lines of business, with 150 insurance processes and named systems)
+
 Turn a client's process list or SOP into an automation assessment, for any industry, in your browser.
 
 1. **Pick the industry.** It decides which process libraries are used.
@@ -26,4 +28,4 @@ Turn a client's process list or SOP into an automation assessment, for any indus
 
 **Important:** the libraries hold starter benchmarks written from general industry knowledge, not measured client data. Check them with an expert and the client's own numbers before using them in a priced proposal.
 
-This repository holds only the built page (`index.html`).
+This repository holds only the built pages (`index.html` and `insurance/index.html`).
