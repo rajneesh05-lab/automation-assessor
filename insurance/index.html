@@ -131,7 +131,19 @@ table.edit input, table.edit select { width: 100%; border: 1px solid transparent
 table.edit input:hover, table.edit select:hover { border-color: var(--line); }
 table.edit input:focus, table.edit select:focus { border-color: var(--focus); background: var(--surface); outline: none; }
 table.edit .w-tower { min-width: 150px; } table.edit .w-proc { min-width: 260px; } table.edit .w-num { min-width: 78px; }
-table.edit .w-per { min-width: 96px; } table.edit .w-sys { min-width: 150px; } table.edit .w-lib { min-width: 150px; }
+table.edit .w-per { min-width: 96px; } table.edit .w-sys { min-width: 190px; } table.edit .w-lib { min-width: 150px; }
+.sys-wrap { display: flex; align-items: stretch; gap: 2px; min-width: 0; }
+.sys-wrap input { flex: 1 1 auto; }
+.sys-btn { flex: none; width: 24px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface-2); color: var(--muted); font-size: 12px; line-height: 1; cursor: pointer; padding: 0; }
+.sys-btn:hover { color: var(--ink); border-color: var(--line-strong); }
+.sys-pop { position: fixed; z-index: 60; background: var(--surface); color: var(--ink); border: 1px solid var(--line-strong); border-radius: 8px; box-shadow: 0 10px 28px rgba(0,0,0,.2); overflow: auto; padding: 4px 0; font-size: 13px; }
+.sys-pop .grp { padding: 8px 10px 2px; font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: .03em; }
+.sys-pop .opt { display: flex; gap: 6px; align-items: baseline; padding: 5px 10px; cursor: pointer; }
+.sys-pop .opt .tick { width: 14px; flex: none; color: var(--s-high); font-weight: 700; }
+.sys-pop .opt .sub { color: var(--muted); font-size: 11px; }
+.sys-pop .opt:hover, .sys-pop .opt.active { background: var(--accent-soft); }
+.sys-pop .opt[aria-selected="true"] .nm { font-weight: 600; }
+.sys-pop .empty { padding: 8px 10px; color: var(--muted); }
 .matched { font-size: 12px; color: var(--muted); min-width: 190px; padding-top: 7px !important; }
 table.edit input.need { background: var(--maybe-bg); border-color: var(--maybe); }
 .banner.lib { background: var(--accent-soft); display: grid; gap: 8px; }
@@ -3270,8 +3282,8 @@ footer p { margin: 4px 0; max-width: 90ch; }
     const full = (tower.systems || []).concat(...(tower.activities || []).map((a) => a.systems || []));
     const parsed = full.map(parseSystem);
     for (const p of parsed) for (const x of p.products) addOpt(x, p.kind);
-    for (const p of parsed) if (!p.products.length) addOpt(p.kind, "System");
-    for (const p of parsed) if (p.products.length) addOpt(p.kind, "Kind of system");
+    for (const p of parsed) if (!p.products.length) addOpt(p.kind, "Other systems");
+    for (const p of parsed) if (p.products.length) addOpt(p.kind, "General (when the product is not known)");
     sysCache.set(tower, out);
     return out;
   }
@@ -3313,25 +3325,160 @@ footer p { margin: 4px 0; max-width: 90ch; }
     inputMessage("ok", "Added " + added.join(", ") + " to the systems list for " + key + ". It will be suggested from now on in this browser, and the Process library download lists it.");
   }
   window.AAMySystems = mySystems;
-  /* A Systems box that suggests the tower's systems by name, keeps free text, and lets you add several:
-     after a comma the suggestions carry on from what is already typed. */
+  /* The Systems box: free text, plus our own dropdown (the arrow button, the Down key, or typing) listing the tower's systems
+     by name, grouped by kind. Ticked ones are already in the box; clicking one adds it, clicking a ticked one takes it out.
+     (The browser's own datalist hid everything once the box had text in it, so it is not used.) */
+  const ARROW = String.fromCharCode(0x25BE), TICK = String.fromCharCode(0x2713);
+  let sysPop = null;
+  function splitSystems(v) { return String(v || "").split(",").map((x) => x.trim()).filter(Boolean); }
+  function closeSysPop() {
+    if (!sysPop) return;
+    sysPop.el.remove();
+    sysPop.input.setAttribute("aria-expanded", "false");
+    sysPop.input.removeAttribute("aria-activedescendant");
+    sysPop = null;
+  }
+  function placeSysPop() {
+    if (!sysPop) return;
+    const anchor = sysPop.input.parentNode;
+    if (!document.body.contains(anchor)) { closeSysPop(); return; }
+    const rc = anchor.getBoundingClientRect();
+    if (rc.bottom < 0 || rc.top > window.innerHeight) { closeSysPop(); return; }
+    const el = sysPop.el;
+    const below = window.innerHeight - rc.bottom - 8, above = rc.top - 8;
+    const up = below < 180 && above > below;
+    el.style.maxHeight = Math.max(120, Math.min(320, up ? above : below)) + "px";
+    el.style.width = Math.max(rc.width, 300) + "px";
+    el.style.left = Math.max(4, Math.min(rc.left, window.innerWidth - Math.max(rc.width, 300) - 4)) + "px";
+    if (up) { el.style.top = ""; el.style.bottom = (window.innerHeight - rc.top + 2) + "px"; }
+    else { el.style.bottom = ""; el.style.top = (rc.bottom + 2) + "px"; }
+  }
+  document.addEventListener("mousedown", (ev) => {
+    if (sysPop && !sysPop.el.contains(ev.target) && !sysPop.input.parentNode.contains(ev.target)) closeSysPop();
+  }, true);
+  window.addEventListener("scroll", (ev) => { if (sysPop && !sysPop.el.contains(ev.target)) placeSysPop(); }, true);
+  window.addEventListener("resize", () => placeSysPop());
   function attachSystemsPicker(input, r) {
-    const dl = h("datalist", { id: "dl-sys-" + Math.random().toString(36).slice(2, 9) });
-    input.setAttribute("list", dl.id);
     input.setAttribute("autocomplete", "off");
-    input.title = "Pick the client's systems from the list (type a name or an abbreviation like GWPC), or type your own; a new name is remembered. Type a comma to add another system.";
+    input.setAttribute("role", "combobox");
+    input.setAttribute("aria-autocomplete", "list");
+    input.setAttribute("aria-expanded", "false");
+    input.title = "Click the arrow to pick the client's systems from the list, or type to search (a name or an abbreviation like GWPC). A system that is not listed can be typed; it is remembered. Separate several systems with commas.";
     input.placeholder = "Pick or type";
-    input.after(dl);
-    const refresh = () => {
-      const val = input.value;
-      const cut = val.lastIndexOf(",");
-      const prefix = cut >= 0 ? val.slice(0, cut).replace(/\s+$/, "") + ", " : "";
-      const have = new Set(val.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean));
-      const opts = systemOptionsFor(r).filter((o) => !have.has(o.v.toLowerCase()));
-      dl.replaceChildren(...opts.slice(0, 120).map((o) => h("option", { value: prefix + o.v, label: o.l })));
+    const btn = h("button", { type: "button", class: "sys-btn", tabindex: "-1", "aria-label": "Show the systems list", title: "Show the systems list", text: ARROW });
+    const wrap = h("div", { class: "sys-wrap" });
+    input.replaceWith(wrap);
+    wrap.append(input, btn);
+    const setValue = (v) => { input.value = v; input.dispatchEvent(new Event("input", { bubbles: true })); };
+    // what is being typed after the last comma (empty when the box ends with a finished system or a comma)
+    const typedTerm = () => {
+      const v = input.value, cut = v.lastIndexOf(",");
+      const t = (cut >= 0 ? v.slice(cut + 1) : v).trim();
+      if (!t) return "";
+      const known = systemOptionsFor(r).some((o) => o.v.toLowerCase() === t.toLowerCase());
+      return known ? "" : t;
     };
-    input.addEventListener("focus", refresh);
-    input.addEventListener("input", refresh);
+    function render(term) {
+      const pop = sysPop.el;
+      const chosen = new Set(splitSystems(input.value).map((x) => x.toLowerCase()));
+      const q = String(term || "").toLowerCase();
+      let opts = systemOptionsFor(r);
+      if (q) {
+        const hit = (o) => o.v.toLowerCase().indexOf(q) >= 0 || o.l.toLowerCase().indexOf(q) >= 0;
+        // a search also looks in the other towers' systems (for example GWBC from a billing tower)
+        const seen = new Set(opts.map((o) => o.v.toLowerCase()));
+        const more = [];
+        for (const t of lib.towers) for (const o of towerSystems(t)) {
+          const k = o.v.toLowerCase();
+          if (!seen.has(k) && hit(o) && o.l !== "General (when the product is not known)") { seen.add(k); more.push({ v: o.v, l: "From other towers" }); }
+        }
+        const mine = mySystems();
+        for (const key of Object.keys(mine)) for (const v of mine[key] || []) {
+          const k = String(v).toLowerCase();
+          if (!seen.has(k) && k.indexOf(q) >= 0) { seen.add(k); more.push({ v, l: "Added by you" }); }
+        }
+        opts = opts.filter(hit).concat(more);
+      }
+      const kids = [], items = [];
+      const addItem = (label, sub, on, pick) => {
+        const id = "sysopt-" + items.length;
+        const el = h("div", { class: "opt", role: "option", id, "aria-selected": String(on) },
+          h("span", { class: "tick", "aria-hidden": "true", text: on ? TICK : "" }), h("span", { class: "nm", text: label }), sub ? h("span", { class: "sub", text: sub }) : null);
+        el.addEventListener("mousedown", (ev) => { ev.preventDefault(); pick(); });
+        items.push({ el, pick });
+        kids.push(el);
+      };
+      const groups = new Map();
+      for (const o of opts) { if (!groups.has(o.l)) groups.set(o.l, []); groups.get(o.l).push(o); }
+      for (const [group, list] of groups) {
+        kids.push(h("div", { class: "grp", role: "presentation", text: group }));
+        for (const o of list) addSystemItem(o);
+      }
+      function addSystemItem(o) {
+        const on = chosen.has(o.v.toLowerCase());
+        addItem(o.v, "", on, () => {
+          let parts = splitSystems(input.value);
+          if (on) parts = parts.filter((x) => x.toLowerCase() !== o.v.toLowerCase());
+          else {
+            if (typedTerm()) parts.pop();
+            parts.push(o.v);
+          }
+          setValue(parts.join(", "));
+          input.dispatchEvent(new Event("change", { bubbles: true }));
+          render("");
+        });
+      }
+      if (q && !opts.some((o) => o.v.toLowerCase() === q)) {
+        kids.push(h("div", { class: "grp", role: "presentation", text: "Not in the list" }));
+        addItem("Use \"" + term.trim() + "\"", "it will be remembered for this tower", false, () => {
+          rememberSystems(r, input.value);
+          setValue(splitSystems(input.value).join(", "));
+          input.dispatchEvent(new Event("change", { bubbles: true }));
+          closeSysPop();
+        });
+      }
+      if (!items.length) kids.push(h("div", { class: "empty", text: "No systems listed for this tower yet. Type the system's name." }));
+      pop.replaceChildren(...kids);
+      sysPop.items = items;
+      sysPop.active = -1;
+      input.removeAttribute("aria-activedescendant");
+    }
+    function open(term) {
+      if (!sysPop || sysPop.input !== input) {
+        closeSysPop();
+        const el = h("div", { class: "sys-pop", role: "listbox", id: "sysPopList", "aria-label": "Systems" });
+        sysPop = { el, input, items: [], active: -1 };
+        document.body.appendChild(el);
+        input.setAttribute("aria-expanded", "true");
+        input.setAttribute("aria-controls", "sysPopList");
+      }
+      render(term);
+      placeSysPop();
+    }
+    function setActive(k) {
+      if (!sysPop || !sysPop.items.length) return;
+      sysPop.items.forEach((it) => it.el.classList.remove("active"));
+      sysPop.active = (k + sysPop.items.length) % sysPop.items.length;
+      const it = sysPop.items[sysPop.active];
+      it.el.classList.add("active");
+      it.el.scrollIntoView({ block: "nearest" });
+      input.setAttribute("aria-activedescendant", it.el.id);
+    }
+    btn.addEventListener("mousedown", (ev) => ev.preventDefault());
+    btn.addEventListener("click", () => {
+      if (sysPop && sysPop.input === input) { closeSysPop(); return; }
+      input.focus();
+      open("");
+    });
+    input.addEventListener("input", () => { if (document.activeElement === input) open(typedTerm()); });
+    input.addEventListener("keydown", (ev) => {
+      const isOpen = sysPop && sysPop.input === input;
+      if (ev.key === "ArrowDown") { ev.preventDefault(); if (!isOpen) open(typedTerm()); else setActive(sysPop.active + 1); }
+      else if (ev.key === "ArrowUp" && isOpen) { ev.preventDefault(); setActive(sysPop.active - 1); }
+      else if (ev.key === "Enter" && isOpen && sysPop.active >= 0) { ev.preventDefault(); sysPop.items[sysPop.active].pick(); }
+      else if (ev.key === "Escape" && isOpen) { ev.preventDefault(); closeSysPop(); }
+      else if (ev.key === "Tab" && isOpen) closeSysPop();
+    });
     input.addEventListener("change", () => rememberSystems(r, input.value));
   }
   function processList(tower) {
