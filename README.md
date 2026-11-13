@@ -18,7 +18,7 @@ Turn a client's process list or SOP into an automation assessment, for any indus
    - Assumptions: how each number was worked out, line by line
 5. **Download the Excel pack:** a workbook with live formulas. It also has the RAID log, controls and discovery questions.
 
-**Libraries:** finance & accounting, banking, healthcare providers, health plans, insurance operations, retail, HR and payroll, and contact center (135 processes).
+**Libraries:** finance & accounting, banking, healthcare providers, health plans, retail, HR and payroll, contact center, and insurance by line: personal, commercial, life, annuities and group benefits. That's 188 processes. **Process library** downloads the full list.
 
 **Privacy:** everything runs in your browser. The process list and documents are not uploaded anywhere. Your last inputs are kept in your own browser only.
 
