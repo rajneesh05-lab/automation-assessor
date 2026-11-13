@@ -12,13 +12,15 @@ Turn a client's process list or SOP into an automation assessment, for any indus
    - Opportunities (Go / Maybe / No)
    - Baseline time and cost
    - Timeline
-   - 3-year cost-benefit
+   - Cost-benefit (yearly and 3-year savings; costs start at $0 until you enter them in More settings)
    - Tool fit (RPA, document AI, generative AI, agentic AI, system fix)
    - RACI
    - Assumptions: how each number was worked out, line by line
 5. **Download the Excel pack:** a workbook with live formulas. It also has the RAID log, controls and discovery questions.
 
-**Libraries:** finance & accounting, banking, healthcare providers, health plans, retail, HR and payroll, contact center, and insurance by line: personal, commercial, life, annuities and group benefits. That's 188 processes. **Process library** downloads the full list.
+**Libraries:** finance & accounting, banking, healthcare providers, health plans, retail, HR and payroll, contact center, and insurance by line: personal, commercial, life, annuities, group benefits and reinsurance, with named systems (GWPC, GWCC, CCC ONE, LexisNexis and more). That's 272 processes, 150 of them insurance. **Process library** downloads the full list.
+
+**The yearly savings figure is the same on every tab.** The input template is two simple sheets (Settings and Processes); optional settings and columns are folded away.
 
 **Privacy:** everything runs in your browser. The process list and documents are not uploaded anywhere. Your last inputs are kept in your own browser only.
 
